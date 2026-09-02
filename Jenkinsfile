@@ -26,9 +26,14 @@ pipeline {
             }
         }
         
-        stage("Install Library & Playwright") {
+        stage("Install Library") {
             steps {
                 bat "npm ci"
+            }
+        }
+        
+         stage("Install Playwright") {
+            steps {
                 bat "npx playwright install"
             }
         }
@@ -39,7 +44,9 @@ pipeline {
                 bat "if exist allure-results rmdir /s /q allure-results"
                 
                 // 2. Chained env variables together on a single line so Playwright reads it
-                bat "set TEST_ENV=${params.ENVIRONMENT_NAME}&& npx playwright test --project=${params.BROWSER_NAME} --grep ${params.SUITE_NAME}"
+                bat "set TEST_ENV=%ENVIRONMENT_NAME%"
+                
+                bat "npx playwright test --project=%BROWSER_NAME% --grep %SUITE_NAME%"
             }
         }
     }
@@ -48,10 +55,7 @@ pipeline {
         always {
             script {
                 allure([
-                    commandline: 'Allure', // 3. IMPORTANT: Must match your Allure name in "Manage Jenkins -> Global Tool Configuration"
                     includeProperties: false,
-                    jdk: '',
-                    properties: [],
                     reportBuildPolicy: 'ALWAYS',
                     results: [[path: 'allure-results']]
                 ])
